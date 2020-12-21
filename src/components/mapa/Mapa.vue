@@ -35,7 +35,7 @@ export default {
         return{
             zoom: 13,
             url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            center: [47.41322, -1.219482],
+            center: [3.43722, -76.5225],
             withPopup: [47.41322, -1.219482],
             mapOptions: {
                 zoomSnap: 0.5
@@ -45,11 +45,6 @@ export default {
         }
     },
     mounted(){
-    
-        this.$nextTick(() => {
-            //this.$refs.myMap.mapObject.ANY_LEAFLET_MAP_METHOD();
-        });
-    
     },
     methods:{
         doSomethingOnReady(){
