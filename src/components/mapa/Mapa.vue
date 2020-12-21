@@ -1,18 +1,19 @@
 <template>
   <l-map ref="myMap" 
-      style="height: 400px"
+      style="height: 400px; "
        :zoom="zoom"
         :center="center"
       :options="mapOptions"
+      @click="addMarker"
   > 
    <l-tile-layer
         :url="url"
         :attribution="attribution"
       />
-        <l-marker :lat-lng="withPopup">
-     
+        <l-marker v-for="marker, index in markers" :lat-lng="marker" :key="index" @click="removeMarker(index)">
       </l-marker>
   </l-map>
+  
 </template>
 <script>
 import L from 'leaflet';
@@ -24,7 +25,8 @@ delete Icon.Default.prototype._getIconUrl;
 Icon.Default.imagePath = '.';
 Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  //iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  iconUrl: require('components/mapa/Marcador/Marcador.png'),
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
@@ -42,9 +44,11 @@ export default {
             },
             attribution:
             '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+            markers:[]
         }
     },
     mounted(){
+       
     },
     methods:{
         doSomethingOnReady(){
@@ -52,6 +56,12 @@ export default {
              this.map = this.$refs.myMap.mapObject
              console.log(this.map)
         },
+            removeMarker(index) {
+        this.markers.splice(index, 1);
+        },
+        addMarker(event) {
+        this.markers.push(event.latlng);
+        }
          
     }
 }
