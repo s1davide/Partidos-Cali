@@ -16,9 +16,14 @@
     "@quasar/extras": "^1.0.0",
     "axios": "^0.18.1",
     "core-js": "^3.6.5",
+    "esri-leaflet": "^2.5.1",
+    "esri-leaflet-geocoder": "^2.3.3",
     "leaflet": "^1.7.1",
+    "leaflet-geosearch": "^3.1.0",
+    "leaflet-search": "^2.9.9",
     "quasar": "^1.0.0",
-    "vue2-leaflet": "^2.6.0"
+    "vue2-leaflet": "^2.6.0",
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
     "@quasar/app": "^2.0.0",
