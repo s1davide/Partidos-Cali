@@ -5,7 +5,7 @@
       src="~assets/quasar-logo-full.svg"
     > -->
     <!-- <p>img</p> -->
-     <Mapa />
+     <Mapa />    
   </q-page>
 </template>
 

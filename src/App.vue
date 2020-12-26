@@ -4,6 +4,7 @@
   </div>
 </template>
 <script>
+import { Notify } from 'quasar';
 export default {
   name: 'App',
 };

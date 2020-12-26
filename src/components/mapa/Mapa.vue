@@ -3,13 +3,14 @@
       style="height: 400px; "
        :zoom="zoom"
         :center="center"
-      :options="mapOptions"
-      @click="addMarker"
+      :options="mapOptions"      
+      @click="abrirPopup"
   > 
+  
    <l-tile-layer
         :url="url"
         :attribution="attribution"
-      />
+      />      
     <l-layer-group ref="popz">
         <l-popup> 
             <div style="min-height: 60px; display:flex !important; justify-content:center !important" >
@@ -19,7 +20,7 @@
           leave-active-class="animated fadeOut"
         >   
         <div key="contenido">            
-            <p v-show="direccionCargada">{{direccionSeleccionada.LongLabel}}  </p>            
+            <p v-show="direccionCargada">{{direccionSeleccionada}}  </p>            
         </div>
               </transition-group>
               
@@ -29,13 +30,11 @@
                 </div>
              <q-separator inset />
 
-             <q-btn flat color="secondary" label="Programar Partido" @click="obtenerDireccion" />
+             <q-btn flat color="secondary" label="Programar Partido" @click="abrirPopup" />
         </l-popup>  
-    </l-layer-group>
-
+    </l-layer-group>    
     <l-marker v-for="marker, index in markers" :lat-lng="marker" :key="index" @click="removeMarker(index)">
-     </l-marker>
-      
+     </l-marker>      
   </l-map>
   
 </template>
@@ -48,9 +47,10 @@ import Axios from 'axios';
 import {parseString} from 'xml2js';
 import * as esri from 'esri-leaflet'
 import * as geocoder from 'esri-leaflet-geocoder';
-import LeafletSearch from "leaflet-search";
-import { OpenStreetMapProvider } from "leaflet-geosearch";
-import { GeoSearchControl } from "leaflet-geosearch";
+import * as easyButton from 'leaflet-easybutton'
+import {SearchControl, OpenStreetMapProvider } from "leaflet-geosearch";
+import LGeosearch from "vue2-leaflet-geosearch";
+import 'esri-leaflet-geocoder/dist/esri-leaflet-geocoder.css'
 
 
 delete Icon.Default.prototype._getIconUrl;
@@ -64,7 +64,9 @@ Icon.Default.mergeOptions({
 
 export default {
     name: 'Mapa',
-    components: { LMap, LTileLayer, LMarker, LPopup, LLayerGroup }    ,
+    components: { 
+        LMap, LTileLayer, LMarker, LPopup, LLayerGroup, LGeosearch
+    },
     data(){
         return{
             zoom: 13,
@@ -81,79 +83,112 @@ export default {
             //POPUP 
             direccionCargada: false,
             //POPUP
+            //
             
             
         }
     },
     mounted(){
-        /* var parentContainer = this.findRealParent(this.$parent);
-        console.log(this.$parent) */
+        let map =this.$refs.myMap.mapObject;
+        const searchControl = new geocoder.Geosearch().addTo(map)                
+        const results = new L.LayerGroup().addTo(map);
+        searchControl.on('results', (data)=>{
+            this.buscarDireccion(data)
+            results.clearLayers();                            
+        }); 
+        L.easyButton('<i class="material-icons" style="font-weight: bold; font-size: 18px" title="Restaurar Mapa">close</i>', function(btn, map){          
+            self.restaurarMapa();      
+        }).addTo(map);
+        let self = this;
+        L.easyButton('<i class="material-icons" style=" font-size: 18px" title="Restaurar Mapa">gps_fixed</i>', function(btn, map){ 
+            let localizacion =false;  
+            self.obtenerUbicacionUsuario();
+        }).addTo(map);
 
-        const provider = new OpenStreetMapProvider();
-        const map = this.$refs.myMap.mapObject;        
-        /* const searchControl =  new L.Control.Search({
-            url: "https://nominatim.openstreetmap.org/search?format=json&q={s}",
-            jsonpParam: "json_callback",
-            propertyName: "display_name",
-            propertyLoc: ["lat", "lon"],
-            marker: L.circleMarker([0, 0], { radius: 30 }),
-            autoCollapse: true,
-            autoType: true,
-            minLength: 2
-        }) */
-        const searchControl = new GeoSearchControl({
-    provider: provider,
-    // ... some more options
-  });
-        console.log(searchControl)
-        map.addControl(searchControl);
-        
     },
     methods:{
-         leafletSearcInit() {
-            LeafletSearch;
+        removeMarker(index) {
+            this.markers.splice(index, 1);
         },
-        doSomethingOnReady(){
-            
-             this.map = this.$refs.myMap.mapObject
-             console.log(this.map)
-        },
-            removeMarker(index) {
-        this.markers.splice(index, 1);
-        },
-        findRealParent(firstVueParent) {
-            let found = false;
-            while (firstVueParent && !found) {
-                if (firstVueParent.mapObject === undefined) {
-                firstVueParent = firstVueParent.$parent;
-                } else {
-                found = true;
-                }
+        obtenerUbicacionUsuario(){
+            let self = this;
+            let map =this.$refs.myMap.mapObject;
+            let lat ;
+            let lng;
+            let ubicacion={};
+            let mensajeError = "Debes permitir tu ubicación en el explorador"
+            if (navigator.geolocation) {       
+                navigator.permissions.query({name:'geolocation'}).then(function(result) {
+                    if (result.state == 'granted') {
+                        navigator.geolocation.getCurrentPosition(function(position) {            
+                            lat = position.coords.latitude;
+                            lng = position.coords.longitude
+                            ubicacion = {lat: lat,lng: lng}
+                            map.flyTo([lat, lng], 17) ;                            
+                            self.abrirPopup(ubicacion)  
+                        })               
+                    } else if (result.state == 'prompt') {                           
+                        navigator.geolocation.getCurrentPosition(function(position) {                            
+                            lat = position.coords.latitude;
+                            lng = position.coords.longitude
+                            ubicacion = {lat: lat,lng: lng}
+                            map.flyTo([lat, lng], 17) ;                            
+                            self.abrirPopup(ubicacion)                              
+                        },(r)=>{self.notificacion(mensajeError, 'negative', 'mood_bad');})
+                    } else if (result.state == 'denied') {                           
+                            self.notificacion(mensajeError, 'negative', 'mood_bad');
+                    }
+                })
             }
-            return firstVueParent;
-            },
-        addMarker(event) {            
-            //this.obtenerDireccion(event.latlng);
-            this.obtenerDireccion(event.latlng)            
-            this.$refs.popz.mapObject.openPopup(event.latlng)
-        //this.markers.push(event.latlng);        
-
         },
-        obtenerDireccion(ltlg){
-           //var geocode= esri.Geocoding.geocodeService();
-           console.log("ejecutado")
+        notificacion(mensaje, color, icon){
+            this.$q.notify({
+                message: mensaje,
+                color: color,
+                icon: icon,
+                position: 'top',
+                timeout: 200
+            })
+        },        
+        abrirPopup(ltlg){            
+           let ubicacion = ltlg.latlng;
            this.direccionCargada = false;     
            var geocode = geocoder.geocodeService();
-           geocode.reverse().latlng(ltlg).run((error, result) =>{
-               console.log(result.address)
-               this.direccionSeleccionada = result.address
-               this.direccionCargada = true;        
+           this.$refs.popz.mapObject.openPopup(ubicacion)
+           geocode.reverse().latlng(ubicacion).run((error, result) =>{ 
+                if(result.address.City!="Cali"){
+                    let mensaje = 'Solo puedes crear partidos en Cali';
+                    this.notificacion(mensaje, 'negative', 'mood_bad')
+                    this.restaurarMapa()
+                }else{
+                    let resultado= result;
+                    this.direccionSeleccionada = ltlg.text!=undefined?ltlg.text: result.address.LongLabel
+                    this.direccionCargada = true;      
+                }                                                        
            })
-        },
-       
-     
-
-         
+        },       
+        buscarDireccion(value){            
+            this.abrirPopup(value)                                 
+        }, 
+        restaurarMapa(){
+            let map =this.$refs.myMap.mapObject;
+            this.$refs.popz.mapObject.closePopup();
+            map.flyTo([3.43722, -76.5225], 13)      
+        }
     }
 }
 </script>
+<style>
+    .easy-button-button{
+        background-color: white ;
+        padding: 0;
+        outline: none;
+        border:none;
+        width: 30px;
+        height: 30px;
+        transition: all .2s;
+    }
+    .easy-button-button:hover{
+        background-color: #f4f2f2;   
+    }
+</style>
