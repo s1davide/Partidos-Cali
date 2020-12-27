@@ -29,8 +29,10 @@
                 </q-inner-loading>
                 </div>
              <q-separator inset />
-
-             <q-btn flat color="secondary" label="Programar Partido" @click="abrirPopup" />
+              <div style="display: flex; justify-content:center;"">
+                  <q-btn flat color="secondary" label="Programar Partido" @click="abrirPopup" />
+              </div> 
+             
         </l-popup>  
     </l-layer-group>    
     <l-marker v-for="marker, index in markers" :lat-lng="marker" :key="index" @click="removeMarker(index)">
@@ -40,7 +42,7 @@
 </template>
 <script>
 import L, { latLng } from 'leaflet';
-import { LMap, LTileLayer, LMarker, LPopup, LLayerGroup } from 'vue2-leaflet';
+import { LMap, LTileLayer, LMarker, LPopup, LLayerGroup, LPolygon } from 'vue2-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Icon } from 'leaflet';
 import Axios from 'axios';
@@ -48,9 +50,8 @@ import {parseString} from 'xml2js';
 import * as esri from 'esri-leaflet'
 import * as geocoder from 'esri-leaflet-geocoder';
 import * as easyButton from 'leaflet-easybutton'
-import {SearchControl, OpenStreetMapProvider } from "leaflet-geosearch";
-import LGeosearch from "vue2-leaflet-geosearch";
 import 'esri-leaflet-geocoder/dist/esri-leaflet-geocoder.css'
+import * as valle from 'src/components/mapa/Polygon/Valle'
 
 
 delete Icon.Default.prototype._getIconUrl;
@@ -65,7 +66,7 @@ Icon.Default.mergeOptions({
 export default {
     name: 'Mapa',
     components: { 
-        LMap, LTileLayer, LMarker, LPopup, LLayerGroup, LGeosearch
+        LMap, LTileLayer, LMarker, LPopup, LLayerGroup
     },
     data(){
         return{
@@ -83,27 +84,42 @@ export default {
             //POPUP 
             direccionCargada: false,
             //POPUP
-            //
+            ///Intancias mapa////////
+            mapa: undefined,
+            poligon: undefined
+            ///Intancias mapa////////
             
             
         }
     },
     mounted(){
-        let map =this.$refs.myMap.mapObject;
-        const searchControl = new geocoder.Geosearch().addTo(map)                
-        const results = new L.LayerGroup().addTo(map);
+        this.mapa =this.$refs.myMap.mapObject;                
+        
+        let buscar = this.organizarGeojson(valle.caliPolygon[0]) ;          
+        const searchControl = new geocoder.Geosearch({
+            useMapBounds: false,
+            zoomToResult: true,
+            allowMultipleResults: true,
+            searchMode: 'contain',
+            searchBounds: buscar
+        }).addTo(this.mapa)                
+        const results = new L.LayerGroup().addTo(this.mapa);
         searchControl.on('results', (data)=>{
-            this.buscarDireccion(data)
+            this.buscarDireccion(data);            
             results.clearLayers();                            
         }); 
         L.easyButton('<i class="material-icons" style="font-weight: bold; font-size: 18px" title="Restaurar Mapa">close</i>', function(btn, map){          
             self.restaurarMapa();      
-        }).addTo(map);
+        }).addTo(this.mapa);
         let self = this;
         L.easyButton('<i class="material-icons" style=" font-size: 18px" title="Restaurar Mapa">gps_fixed</i>', function(btn, map){ 
             let localizacion =false;  
             self.obtenerUbicacionUsuario();
-        }).addTo(map);
+        }).addTo(this.mapa);
+        
+
+      
+
 
     },
     methods:{
@@ -111,8 +127,7 @@ export default {
             this.markers.splice(index, 1);
         },
         obtenerUbicacionUsuario(){
-            let self = this;
-            let map =this.$refs.myMap.mapObject;
+            let self = this;            
             let lat ;
             let lng;
             let ubicacion={};
@@ -124,15 +139,15 @@ export default {
                             lat = position.coords.latitude;
                             lng = position.coords.longitude
                             ubicacion = {lat: lat,lng: lng}
-                            map.flyTo([lat, lng], 17) ;                            
-                            self.abrirPopup(ubicacion)  
+                            this.mapa.flyTo([lat, lng], 17) ;                            
+                            self.ab(ubicacion)  
                         })               
                     } else if (result.state == 'prompt') {                           
                         navigator.geolocation.getCurrentPosition(function(position) {                            
                             lat = position.coords.latitude;
                             lng = position.coords.longitude
                             ubicacion = {lat: lat,lng: lng}
-                            map.flyTo([lat, lng], 17) ;                            
+                            this.mapa.flyTo([lat, lng], 17) ;                            
                             self.abrirPopup(ubicacion)                              
                         },(r)=>{self.notificacion(mensajeError, 'negative', 'mood_bad');})
                     } else if (result.state == 'denied') {                           
@@ -150,31 +165,81 @@ export default {
                 timeout: 200
             })
         },        
-        abrirPopup(ltlg){            
-           let ubicacion = ltlg.latlng;
-           this.direccionCargada = false;     
-           var geocode = geocoder.geocodeService();
+        
+        abrirPopup(ltlg){
+           let ubicacion = ltlg.latlng
+           var geocode = geocoder.geocodeService();           
+           this.polygon!=undefined?this.mapa.removeLayer(this.polygon):undefined;
            this.$refs.popz.mapObject.openPopup(ubicacion)
-           geocode.reverse().latlng(ubicacion).run((error, result) =>{ 
+           this.mapa.flyTo([ubicacion.lat, ubicacion.lng], 17)   
+           geocode.reverse().latlng(ubicacion).run((error, result) =>{                
                 if(result.address.City!="Cali"){
                     let mensaje = 'Solo puedes crear partidos en Cali';
+                    this.polygon!=undefined?this.mapa.removeLayer(this.polygon):undefined;
                     this.notificacion(mensaje, 'negative', 'mood_bad')
                     this.restaurarMapa()
-                }else{
-                    let resultado= result;
+                }else{                    
                     this.direccionSeleccionada = ltlg.text!=undefined?ltlg.text: result.address.LongLabel
                     this.direccionCargada = true;      
                 }                                                        
            })
-        },       
-        buscarDireccion(value){            
-            this.abrirPopup(value)                                 
+        },  
+        buscarDireccion(value){                  
+            let resultado = value.results;                        
+            resultado.length>0?this.obtenerInfoPoligono(resultado[0].latlng):this.reintentarBusqueda(value);            
         }, 
-        restaurarMapa(){
-            let map =this.$refs.myMap.mapObject;
+        obtenerInfoPoligono(coordenadas){
+            this.$axios.get(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&polygon_geojson=1&lat=${coordenadas.lat}&lon=${coordenadas.lng}`).then((res)=>{                          
+                        let latlng =  {latlng:{lat: res.data.lat, lng: res.data.lon} }  
+                        this.abrirPopup(latlng);
+                        this.dibujarPoligono(res.data.geojson);
+                       
+                })
+        },
+        dibujarPoligono(coordenadas){               
+                    if(coordenadas.type=="Polygon"){
+                        let lng = this.organizarGeojson(coordenadas.coordinates[0]);
+                        this.polygon!=undefined?this.mapa.removeLayer(this.polygon):undefined;
+                        this.polygon = L.polygon(lng, {color:'blue'}).addTo(this.mapa);                   
+                    }
+                    else if(coordenadas.type=="Point"){
+                        let lng = this.organizarGeojson([coordenadas.coordinates])[0];                        
+                        this.polygon!=undefined?this.mapa.removeLayer(this.polygon):undefined;
+                        this.polygon = L.circle(lng, {color:'blue', radius: 8}).addTo(this.mapa);                           
+                    }
+                    else{
+                        let lng =  this.organizarGeojson(coordenadas.coordinates)
+                        this.polygon!=undefined?this.mapa.removeLayer(this.polygon):undefined;
+                        this.polygon = L.polygon(lng, {color:'blue'}).addTo(this.mapa);
+                    }                             
+        },
+        reintentarBusqueda(resInicial){
+            let query = resInicial.text.split(",");            
+            this.$axios.get
+            (`https://nominatim.openstreetmap.org/search?q=${query[0]} ${query[2]} ${query[3]}&format=json&polygon_geojson=1&addressdetails=1`)
+            .then((res)=>{
+                if(res.data.length>0){                                                     
+                    let latlng =  {latlng:{lat: res.data[0].lat, lng: res.data[0].lon}}
+                    this.abrirPopup(latlng);
+                    this.dibujarPoligono(res.data[0].geojson)                    
+                }
+                else{                    
+                    this.notificacion("No se encontraron coincidencias", 'negative', 'mood_bad')
+                }
+                
+            })            
+        },
+        restaurarMapa(){            
             this.$refs.popz.mapObject.closePopup();
-            map.flyTo([3.43722, -76.5225], 13)      
-        }
+            this.mapa.flyTo([3.43722, -76.5225], 13)                  
+        },
+        organizarGeojson(geoJson){
+            let geoJsonOrganizado = geoJson.map((x)=>{
+            let organizado = [x[1],x[0]]
+            return organizado})    
+            return   geoJsonOrganizado;
+        },
     }
 }
 </script>
