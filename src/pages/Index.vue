@@ -5,13 +5,16 @@
       src="~assets/quasar-logo-full.svg"
     > -->
     <!-- <p>img</p> -->
-     <Mapa />    
+     <Mapa :notificacion="notificacion"/>    
   </q-page>
 </template>
 
 <script>
 import Mapa from 'components/mapa/Mapa.vue';
 export default {  
+  props:{
+    notificacion:{}
+  },
   name: 'PageIndex',
  components: { Mapa }
 };

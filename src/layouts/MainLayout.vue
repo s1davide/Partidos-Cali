@@ -1,7 +1,7 @@
 <template>
   <q-layout view="lHh Lpr lFf">
     <q-header elevated>
-      <q-toolbar class="bg-orange">
+      <q-toolbar class="bg-positive">
         <q-btn
           flat
           dense
@@ -41,7 +41,7 @@
     </q-drawer>
 
     <q-page-container>
-      <router-view />
+      <router-view :notificacion="notificacion" />
     </q-page-container>
   </q-layout>
 </template>
@@ -53,12 +53,17 @@ const linksData = [];
 
 export default {
   name: 'MainLayout',
+  props:{
+    notificacion:{}
+  },
   components: { EssentialLink },
   data() {
     return {
       leftDrawerOpen: false,
-      essentialLinks: linksData,
+      essentialLinks: linksData,      
     };
   },
+  
 };
 </script>
+

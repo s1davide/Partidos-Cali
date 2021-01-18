@@ -18,10 +18,11 @@
     "core-js": "^3.6.5",
     "esri-leaflet": "^2.5.1",
     "esri-leaflet-geocoder": "^2.3.3",
+    "firebase": "^8.2.3",
     "leaflet": "^1.7.1",
-    "leaflet-easybutton": "^2.4.0",    
+    "leaflet-easybutton": "^2.4.0",
     "quasar": "^1.0.0",
-    "vue2-leaflet": "^2.6.0",    
+    "vue2-leaflet": "^2.6.0",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {

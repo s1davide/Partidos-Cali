@@ -1,6 +1,6 @@
 <template>
   <l-map ref="myMap" 
-      style="height: 400px; "
+      style="height: 94vh; "
        :zoom="zoom"
         :center="center"
       :options="mapOptions"      
@@ -29,10 +29,9 @@
                 </q-inner-loading>
                 </div>
              <q-separator inset />
-              <div style="display: flex; justify-content:center;"">
+              <div style="display: flex; justify-content:center;">
                   <q-btn flat color="secondary" label="Programar Partido" @click="abrirPopup" />
               </div> 
-             
         </l-popup>  
     </l-layer-group>    
     <l-marker v-for="marker, index in markers" :lat-lng="marker" :key="index" @click="removeMarker(index)">
@@ -65,6 +64,7 @@ Icon.Default.mergeOptions({
 
 export default {
     name: 'Mapa',
+    props:{notificacion:{}},
     components: { 
         LMap, LTileLayer, LMarker, LPopup, LLayerGroup
     },
@@ -116,11 +116,6 @@ export default {
             let localizacion =false;  
             self.obtenerUbicacionUsuario();
         }).addTo(this.mapa);
-        
-
-      
-
-
     },
     methods:{
         removeMarker(index) {
@@ -139,7 +134,7 @@ export default {
                             lat = position.coords.latitude;
                             lng = position.coords.longitude
                             ubicacion = {lat: lat,lng: lng}
-                            this.mapa.flyTo([lat, lng], 17) ;                            
+                            self.mapa.flyTo([lat, lng], 17) ;                            
                             self.ab(ubicacion)  
                         })               
                     } else if (result.state == 'prompt') {                           
@@ -147,25 +142,16 @@ export default {
                             lat = position.coords.latitude;
                             lng = position.coords.longitude
                             ubicacion = {lat: lat,lng: lng}
-                            this.mapa.flyTo([lat, lng], 17) ;                            
+                            self.mapa.flyTo([lat, lng], 17) ;                            
                             self.abrirPopup(ubicacion)                              
-                        },(r)=>{self.notificacion(mensajeError, 'negative', 'mood_bad');})
+                        },(r)=>{self.notificacion(mensajeError, 'negative', 'mood_bad',200);})
                     } else if (result.state == 'denied') {                           
-                            self.notificacion(mensajeError, 'negative', 'mood_bad');
+                            self.notificacion(mensajeError, 'negative', 'mood_bad',200);
                     }
                 })
             }
         },
-        notificacion(mensaje, color, icon){
-            this.$q.notify({
-                message: mensaje,
-                color: color,
-                icon: icon,
-                position: 'top',
-                timeout: 200
-            })
-        },        
-        
+             
         abrirPopup(ltlg){
            let ubicacion = ltlg.latlng
            var geocode = geocoder.geocodeService();           
@@ -176,7 +162,7 @@ export default {
                 if(result.address.City!="Cali"){
                     let mensaje = 'Solo puedes crear partidos en Cali';
                     this.polygon!=undefined?this.mapa.removeLayer(this.polygon):undefined;
-                    this.notificacion(mensaje, 'negative', 'mood_bad')
+                    this.notificacion(mensaje, 'negative', 'mood_bad',200)
                     this.restaurarMapa()
                 }else{                    
                     this.direccionSeleccionada = ltlg.text!=undefined?ltlg.text: result.address.LongLabel
@@ -225,7 +211,7 @@ export default {
                     this.dibujarPoligono(res.data[0].geojson)                    
                 }
                 else{                    
-                    this.notificacion("No se encontraron coincidencias", 'negative', 'mood_bad')
+                    this.notificacion("No se encontraron coincidencias", 'negative', 'mood_bad',200)
                 }
                 
             })            

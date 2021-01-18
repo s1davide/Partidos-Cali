@@ -22,6 +22,7 @@ module.exports = function (/* ctx */) {
     // https://quasar.dev/quasar-cli/boot-files
     boot: [
       'axios',
+      'firebase',
     ],
 
     // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css
@@ -124,7 +125,7 @@ module.exports = function (/* ctx */) {
         description: 'Aplicación para programar partidos de futbol en Cali',
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#ffffff',
+        background_color: '#b5f4d0',
         theme_color: '#027be3',
         icons: [
           {
