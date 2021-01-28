@@ -12,10 +12,32 @@
         />
 
         <q-toolbar-title>
-          Quasar App
+          <q-avatar size="30px" class="q-mr-sm">
+            <img src="../assets/img/balon2.png">
+          </q-avatar>
+          <strong>Partidos Cali </strong>
         </q-toolbar-title>
-
-        <div>Quasar v{{ $q.version }}</div>
+        <!-- ///////////////////////////////////////Avatar y menu Usuario//////////////////////////////////// -->
+        <q-btn no-caps :round="this.$q.screen.xs" class="btnUserCompleto" flat> 
+          <!-- //////////////////////////////Avatar y menu Usuario-Con sesión Iniciada//////////////////////////////// -->
+          <div v-if="sesionIniciada" class="row items-center q-gutter-sm" >                      
+           <q-avatar size="42px">
+              <img :src="informacionUsuario.urlImg">            
+            </q-avatar>                  
+            <div :hidden="this.$q.screen.xs"><strong >{{informacionUsuario.nombreUsuario}}</strong></div>            
+          </div>
+          <!-- //////////////////////////////Avatar y menu Usuario-Con sesión Iniciada//////////////////////////////// -->
+          <!-- //////////////////////////////Avatar y menu Usuario-Con sesión Cerrada//////////////////////////////// -->
+          <div v-else-if="!sesionIniciada" class="row items-center q-gutter-sm" >          
+            <q-avatar size="42px" class="bg-positive" top avatar>
+                <q-icon style="top: -3.2px" size="49px" name="account_circle" />    
+            </q-avatar> 
+            <div :hidden="this.$q.screen.xs"><strong >Loguearse</strong></div>  
+          </div>
+          <!-- //////////////////////////////Avatar y menu Usuario-Con sesión Cerrada//////////////////////////////// -->
+          <Menu />          
+        </q-btn>
+        <!-- ///////////////////////////////////////Avatar y menu Usuario//////////////////////////////////// -->        
       </q-toolbar>
     </q-header>
 
@@ -39,31 +61,34 @@
         />
       </q-list>
     </q-drawer>
-
+    <ConfiguracionPerfil/>
     <q-page-container>
-      <router-view :notificacion="notificacion" />
+      <router-view />
     </q-page-container>
   </q-layout>
 </template>
 
 <script>
 import EssentialLink from 'components/EssentialLink.vue';
-
+import Menu from 'components/barraNavegacion/Menu.vue'
+import ConfiguracionPerfil  from 'components/barraNavegacion/ConfiguracionPerfil.vue'
+import {mapState} from 'vuex'
 const linksData = [];
 
 export default {
-  name: 'MainLayout',
-  props:{
-    notificacion:{}
-  },
-  components: { EssentialLink },
+  name: 'MainLayout',  
+  
+  components: { EssentialLink, Menu, ConfiguracionPerfil},
   data() {
     return {
       leftDrawerOpen: false,
       essentialLinks: linksData,      
     };
   },
+  computed:{
+    ...mapState('elementosPublicos',['sesionIniciada']),
+    ...mapState('elementosPublicos',['informacionUsuario'])
+  }
   
 };
 </script>
-

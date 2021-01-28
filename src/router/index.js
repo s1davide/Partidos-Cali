@@ -2,6 +2,8 @@ import Vue from 'vue';
 import VueRouter from 'vue-router';
 
 import routes from './routes';
+import store from '../store/index'
+import * as verificaUsuario from '../boot/verificaUsuario'
 
 Vue.use(VueRouter);
 
@@ -24,7 +26,8 @@ export default function (/* { store, ssrContext } */) {
     // quasar.conf.js -> build -> publicPath
     mode: process.env.VUE_ROUTER_MODE,
     base: process.env.VUE_ROUTER_BASE,
-  });
+  });  
+
 
   return Router;
 }

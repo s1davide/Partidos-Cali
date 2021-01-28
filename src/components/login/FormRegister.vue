@@ -10,7 +10,11 @@
             hint="Ingrese su Correo Electrónico"
             :dense="true"
             lazy-rules
-            :rules="[ val => val && val.length > 0 || 'Please type something']"
+            autofocus
+            :rules="[ 
+            val => val && val.length > 0 || 'El campo no puede quedar vacío',
+            
+            ]"
         />
         <q-input
             filled
@@ -23,8 +27,7 @@
             :rules="[ val => val && val.length > 0 || 'El campo no puede quedar vacío',
                    val =>val.length >= 6 || 'La contraseña debe tener como mínimo 6 caracteres.'     
             ]"
-        />
-        
+        />        
         <q-input
             filled
             type="password"            
@@ -34,40 +37,37 @@
             :dense="true"
             lazy-rules
             :rules="[
+             val => val && val.length > 0 || 'El campo no puede quedar vacío',
             val => val == password || 'La contraseña no coincide con la confirmación.',            
             ]"
         />
         <div class="row justify-end">
             <q-btn label="Registrarse" type="submit" color="positive"/>
-            <q-btn label="Reset" type="reset" color="positive" flat class="q-ml-sm" />
+            <q-btn  @click="$router.push('/')" label="Cancelar" color="positive" flat class="q-ml-sm" />
         </div>
-        </q-form>
+    </q-form>
 </template>
 <script>
 import login from 'pages/Login.vue'
-export default {
-    props:{
-        firebase:{        },
-        notificacion:{
-            
-        }
-    },
-    mounted(){
-        console.log(this.notificacion)
-        
+import * as firebase from 'boot/firebase' 
+import {mapState} from 'vuex'
+export default {    
+    mounted(){        
+        this.notificacion = this.plugins.notificacion
+        /* console.log(this.$store.state.elementosPublicos.form) */
     },
     data(){
         return{            
             email: '',
             password:'',
-            password2:''
+            password2:'',
+            notificacion: ''
         }
     },
     methods:{
-        registrar(e){
-            
+        registrar(e){            
             /* e.preventDefault() */
-            this.firebase.auth.createUserWithEmailAndPassword(this.email, this.password)
+            firebase.auth.createUserWithEmailAndPassword(this.email, this.password)
             .then(()=>{
                 this.enviarCorreoVerificacion();
             })
@@ -76,16 +76,29 @@ export default {
             })
         },
         enviarCorreoVerificacion(){
-            let user = this.firebase.auth.currentUser;
+            let user = firebase.auth.currentUser;
             user.sendEmailVerification()
             .then(()=>{
                 this.notificacion("Se ha enviado un correo de verificación de la cuenta", "positive", "", 2000);
+                this.email='';
+                this.password='';
+                this.password2='';
+                this.form = 'login'
             },(error)=>{
                 console.log(error);
             })
+        },        
+    },
+    computed:{        
+        form:{
+            get(){
+                return this.$store.state.elementosPublicos.form
+            },
+            set(value){
+                this.$store.commit('elementosPublicos/modificaForm',value);
+            }
         },
-
-    }
-
+        ...mapState('elementosPublicos',['plugins'])
+    } 
 }
 </script>

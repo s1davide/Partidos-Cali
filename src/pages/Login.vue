@@ -1,10 +1,10 @@
 <template>
-    <q-layout>
+    <q-layout v-if="mostrarLogin">
         <q-page-container>            
             <q-page padding class="column">
                 <div class="row contTitulo" style="margin: auto; margin-bottom:35px; margin-top:0; align-items: center;">
                     <h5 class=" titulo" >Partidos Cali</h5>    
-                    <q-img class="titulo" src="../components/login/img/balon2.png" style="height: 100px; width: 100px; margin-left: 30px" ></q-img>
+                    <q-img class="titulo" src="../assets/img/balon2.png" style="height: 100px; width: 100px; margin-left: 30px" ></q-img>
                 </div>
                 <div style="margin:auto; margin-top:0; max-width: 596px;
                 width: 90%; 
@@ -17,7 +17,7 @@
                 color="white"
                 text-color="black"
                 :options="options"    
-                @click="form=='login'?alturaCarousel='230px':alturaCarousel='300px'" 
+                @click="form =='login'?alturaCarousel='250px':alturaCarousel='300px'" 
                 class="noBRadiusUpDown"                  
                 />
             <q-card class="my-card noBRadiusUp">
@@ -32,10 +32,10 @@
                     :height="alturaCarousel"
                     >
                         <q-carousel-slide name="login" class="column no-wrap flex-center">
-                        <FormLogin :firebase="firebase" style="max-width: 596px; width: 100%;"/>
+                        <FormLogin style="max-width: 596px; width: 100%;"/>
                         </q-carousel-slide>
                         <q-carousel-slide name="register" class="column no-wrap flex-center">
-                        <FormRegister :firebase="firebase" :notificacion="notificacion" style="max-width: 596px; width: 100%;"/>
+                        <FormRegister style="max-width: 596px; width: 100%;"/>
                         </q-carousel-slide>
                     </q-carousel>
             </q-card-section>      
@@ -48,30 +48,47 @@
 <script>
 import FormLogin from 'components/login/FormLogin.vue';
 import FormRegister from 'components/login/FormRegister.vue';
-import * as firebase from 'boot/firebase' 
-export default {
-    props:{
-        notificacion:{            
-            required: true
-        }
-    },
-    components:{FormLogin,
-                FormRegister
-    },
-    mounted(){
-        this.firebase = firebase;
-    },
+import {mapState, mapMutations} from 'vuex';
+export default {    
     data(){
         return{
             options:[
                 {label: 'Loguearse', value: 'login'},
                 {label: 'Registrarse', value: 'register'}
             ],
-            form: 'login',
-            alturaCarousel: '250px', 
-            firebase:''
+            /* form: 'login', */
+            alturaCarousel: '250px',      
+            ///////
+            mostrarLogin:false,       
         }        
     },    
+    components:{FormLogin,
+                FormRegister
+    },   
+    mounted(){
+        this.form=="register"?this.alturaCarousel = "300px":this.alturaCarousel = "250px"        
+        if(this.$route.path=='/login' && this.sesionIniciada){            
+            this.$router.push('/')
+            this.plugins.notificacion('Ya ha iniciado sesión.', "negative", "", 3000) 
+            
+        }        
+        else{
+            this.mostrarLogin = true
+        }
+    },    
+    computed:{        
+        form:{
+            get(){
+                return this.$store.state.elementosPublicos.form
+            },
+            set(value){
+                this.$store.commit('elementosPublicos/modificaForm',value);
+            },         
+        },
+        ...mapState('elementosPublicos',['sesionIniciada']),
+        ...mapState('elementosPublicos',['plugins'])
+    } 
+    
 }
 </script>
 <style lang="stylus">

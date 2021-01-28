@@ -1,43 +1,44 @@
-<template>
-  <l-map ref="myMap" 
-      style="height: 94vh; "
-       :zoom="zoom"
-        :center="center"
-      :options="mapOptions"      
-      @click="abrirPopup"
-  > 
-  
-   <l-tile-layer
-        :url="url"
-        :attribution="attribution"
-      />      
-    <l-layer-group ref="popz">
-        <l-popup> 
-            <div style="min-height: 60px; display:flex !important; justify-content:center !important" >
-              <transition-group
-          appear
-          enter-active-class="animated fadeIn"
-          leave-active-class="animated fadeOut"
-        >   
-        <div key="contenido">            
-            <p v-show="direccionCargada">{{direccionSeleccionada}}  </p>            
-        </div>
-              </transition-group>
-              
-              <q-inner-loading style="top: -30px !important"  :showing="!direccionCargada">
-                <q-spinner-gears size="50px" color="primary" />
-                </q-inner-loading>
+<template>    
+        <l-map ref="myMap" 
+            style="height: 94vh; "
+            :zoom="zoom"
+            :center="center"
+            :options="mapOptions"      
+            @click="abrirPopup"
+        > 
+        
+        <l-tile-layer
+                :url="url"
+                :attribution="attribution"
+            />      
+            <l-layer-group ref="popz">
+                <l-popup> 
+                    <div style="min-height: 60px; display:flex !important; justify-content:center !important" >
+                    <transition-group
+                appear
+                enter-active-class="animated fadeIn"
+                leave-active-class="animated fadeOut"
+                >   
+                <div key="contenido">            
+                    <p v-show="direccionCargada">{{direccionSeleccionada}}  </p>            
                 </div>
-             <q-separator inset />
-              <div style="display: flex; justify-content:center;">
-                  <q-btn flat color="secondary" label="Programar Partido" @click="abrirPopup" />
-              </div> 
-        </l-popup>  
-    </l-layer-group>    
-    <l-marker v-for="marker, index in markers" :lat-lng="marker" :key="index" @click="removeMarker(index)">
-     </l-marker>      
-  </l-map>
-  
+                    </transition-group>
+                    
+                    <q-inner-loading style="top: -30px !important"  :showing="!direccionCargada">
+                        <q-spinner-gears size="50px" color="primary" />
+                        </q-inner-loading>
+                        </div>
+                    <q-separator inset />
+                    <div style="display: flex; justify-content:center;">
+                        <q-btn flat color="secondary" label="Programar Partido" @click="crearPartido" />
+                    </div> 
+                </l-popup>  
+            </l-layer-group>    
+            <l-marker v-for="marker, index in markers" :lat-lng="marker" :key="index" @click="removeMarker(index)">
+            </l-marker>      
+        </l-map>
+        
+    
 </template>
 <script>
 import L, { latLng } from 'leaflet';
@@ -45,13 +46,13 @@ import { LMap, LTileLayer, LMarker, LPopup, LLayerGroup, LPolygon } from 'vue2-l
 import 'leaflet/dist/leaflet.css';
 import { Icon } from 'leaflet';
 import Axios from 'axios';
-import {parseString} from 'xml2js';
+import { parseString } from 'xml2js';
 import * as esri from 'esri-leaflet'
 import * as geocoder from 'esri-leaflet-geocoder';
 import * as easyButton from 'leaflet-easybutton'
 import 'esri-leaflet-geocoder/dist/esri-leaflet-geocoder.css'
 import * as valle from 'src/components/mapa/Polygon/Valle'
-
+import {mapState} from 'vuex'
 
 delete Icon.Default.prototype._getIconUrl;
 Icon.Default.imagePath = '.';
@@ -63,8 +64,7 @@ Icon.Default.mergeOptions({
 });
 
 export default {
-    name: 'Mapa',
-    props:{notificacion:{}},
+    name: 'Mapa',    
     components: { 
         LMap, LTileLayer, LMarker, LPopup, LLayerGroup
     },
@@ -86,15 +86,14 @@ export default {
             //POPUP
             ///Intancias mapa////////
             mapa: undefined,
-            poligon: undefined
-            ///Intancias mapa////////
-            
+            poligon: undefined,
+            ///Intancias mapa////////                       
             
         }
     },
     mounted(){
         this.mapa =this.$refs.myMap.mapObject;                
-        
+        this.notificacion = this.plugins.notificacion;
         let buscar = this.organizarGeojson(valle.caliPolygon[0]) ;          
         const searchControl = new geocoder.Geosearch({
             useMapBounds: false,
@@ -118,6 +117,8 @@ export default {
         }).addTo(this.mapa);
     },
     methods:{
+        
+        ///////////////////////////////////////////Funcionalidades del mapa/////////////////////////////////////////////////////
         removeMarker(index) {
             this.markers.splice(index, 1);
         },
@@ -179,8 +180,7 @@ export default {
                     `https://nominatim.openstreetmap.org/reverse?format=json&polygon_geojson=1&lat=${coordenadas.lat}&lon=${coordenadas.lng}`).then((res)=>{                          
                         let latlng =  {latlng:{lat: res.data.lat, lng: res.data.lon} }  
                         this.abrirPopup(latlng);
-                        this.dibujarPoligono(res.data.geojson);
-                       
+                        this.dibujarPoligono(res.data.geojson);                       
                 })
         },
         dibujarPoligono(coordenadas){               
@@ -226,6 +226,13 @@ export default {
             return organizado})    
             return   geoJsonOrganizado;
         },
+        ///////////////////////////////////////////Funcionalidades del mapa/////////////////////////////////////////////////////
+        
+
+    },
+    computed:{
+        ...mapState('elementosPublicos',['crearPartido']),
+        ...mapState('elementosPublicos',['plugins'])
     }
 }
 </script>

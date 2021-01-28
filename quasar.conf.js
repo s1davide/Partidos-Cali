@@ -23,6 +23,10 @@ module.exports = function (/* ctx */) {
     boot: [
       'axios',
       'firebase',
+      'validaImagen',
+      'vuePlugins',
+      'javaScriptUtils',
+      'verificaUsuario',
     ],
 
     // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css
@@ -103,6 +107,8 @@ module.exports = function (/* ctx */) {
       // Quasar plugins
       plugins: [
         'Notify',
+        'Loading',
+        'Dialog',
       ],
     },
 

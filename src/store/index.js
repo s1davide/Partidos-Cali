@@ -2,7 +2,7 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 
 // import example from './module-example'
-
+import elementosPublicos from './elementosPublicos'
 Vue.use(Vuex);
 
 /*
@@ -17,7 +17,8 @@ Vue.use(Vuex);
 export default function (/* { ssrContext } */) {
   const Store = new Vuex.Store({
     modules: {
-      // example
+      // example      
+      elementosPublicos
     },
 
     // enable strict mode (adds overhead!)
