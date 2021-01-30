@@ -1,11 +1,14 @@
 export default function () {
   return {
     plugins:{},
-    form: 'login',
-    crearPartido: '',
+    form: 'login',    
     sesionIniciada:false,
+    logo:'',
     menuConfiguracionPerfil: false,
     imagenBase:'',
-    informacionUsuario:{}
+    informacionUsuario:{},
+    funcionCrearPartido: '',
+    dialogoCrearPartido: false,
+    informacionPartido:{}
   }
 }

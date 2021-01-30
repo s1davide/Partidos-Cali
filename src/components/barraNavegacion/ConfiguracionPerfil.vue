@@ -536,15 +536,17 @@ export default {
         this.email = this.informacionUsuario.email
         this.user =this.informacionUsuario.nombreUsuario
         this.imagenSeleccionadaFinal = this.informacionUsuario.urlImg
-
         var user = this.$firebase.auth().currentUser
-        if(user.photoURL=='na'){
-          this.permiteQuitarImagen=true;
-          this.restaurarImagenBase=true;
-          this.esImagenBase=true
-        }else{
-          this.permiteQuitarImagen=false;
+        if(user!=null){
+          if(user.photoURL=='na'){
+            this.permiteQuitarImagen=true;
+            this.restaurarImagenBase=true;
+            this.esImagenBase=true
+          }else{
+            this.permiteQuitarImagen=false;
+          }
         }
+        
         
       }
       

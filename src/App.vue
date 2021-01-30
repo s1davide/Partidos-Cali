@@ -25,6 +25,7 @@ export default {
       cargando: this.loading     ,
       dialogoCargando: this.dialogLoading 
     }     
+    this.setLogo(require('assets/img/balon2.png'))
     this.informacionCargada=false;
     this.verificaLogin()    
   }, 
@@ -33,8 +34,7 @@ export default {
       this.imagenBase = require('assets/img/avatar.png');    
       firebase.auth.onAuthStateChanged(async (user)=>{        
         if(user && user.emailVerified){        
-          let ingresadoDatosInicio = user.displayName !=null && user.photoURL!=null;
-          console.log(user)
+          let ingresadoDatosInicio = user.displayName !=null && user.photoURL!=null;          
             if(!ingresadoDatosInicio && this.$route.path=='/')
             { 
               firebase.auth.signOut().then(() => {}) 
@@ -124,7 +124,7 @@ export default {
       }) 
     },
     ...mapMutations('elementosPublicos',['setInformacionUsuario']),
-    
+    ...mapMutations('elementosPublicos',['setLogo']),
   },
 
   computed: {

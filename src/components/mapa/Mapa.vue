@@ -30,11 +30,65 @@
                         </div>
                     <q-separator inset />
                     <div style="display: flex; justify-content:center;">
-                        <q-btn flat color="secondary" label="Programar Partido" @click="crearPartido" />
+                        <q-btn flat color="secondary" label="Programar Partido" @click="funcionCrearPartido(direccionSeleccionada)" />
                     </div> 
                 </l-popup>  
             </l-layer-group>    
-            <l-marker v-for="marker, index in markers" :lat-lng="marker" :key="index" @click="removeMarker(index)">
+            <l-layer-group  style="min-width: 250px" ref="popInfoPartido">
+                <l-popup  style="min-width: 250px"> 
+                    <div style="min-height: 60px; display:flex !important; justify-content:center !important" >
+                    
+                        <div key="contenido" class="column text-center">  
+                            <p class="text-center"><strong>{{partidoSeleccionado.nombrePartido}}</strong></p>          
+                            <p>Creado por: {{partidoSeleccionado.usuario}}</p>          
+                            <p>Info Ubicación: {{partidoSeleccionado.direccion}} </p>
+                            <p>Fecha: {{partidoSeleccionado.fecha}} </p>      
+                            <p>Nro Asistentes: {{partidoSeleccionado.asistentes.length}} de {{partidoSeleccionado.maximoAsistentes}}</p>             
+                            <strong v-if="partidoSeleccionado.asistentes.find(a=>a.email==informacionUsuario.email)!=undefined && informacionUsuario.email!=partidoSeleccionado.email" class="text-positive">
+                                Estas en este partido</strong>
+                            <strong v-if="informacionUsuario.email==partidoSeleccionado.email" class="text-positive">Creaste este Partido</strong>
+                            <q-btn v-if="sesionIniciada" color="primary" flat no-caps>
+                            <div>Ingresar al Chat</div>
+                                <q-icon     
+                                    class="q-ml-sm"
+                                    name="message"
+                                    color="primary"
+                                    />
+                                </q-btn>
+                        </div>
+                        </div>
+                    <!-- <q-separator inset /> -->
+                    <div style="display: flex; justify-content:center;">
+                    <q-btn  
+                    v-if="informacionUsuario.email!=partidoSeleccionado.email && 
+                    partidoSeleccionado.asistentes.length<partidoSeleccionado.maximoAsistentes &&
+                    partidoSeleccionado.asistentes.find(a=>a.email==informacionUsuario.email)==undefined && sesionIniciada"  
+                    color="positive" flat no-caps
+                    @click="irAPartido">
+                        <div>Ir al partido</div>
+                        <q-icon   
+                            class="q-ml-sm"
+                            name="sports_soccer"
+                            color="positive"
+                            />
+                    </q-btn>
+                    <q-btn  
+                    v-if="informacionUsuario.email!=partidoSeleccionado.email &&                     
+                    partidoSeleccionado.asistentes.find(a=>a.email==informacionUsuario.email)!=undefined && sesionIniciada"    
+                    
+                    color="negative" flat no-caps
+                    @click="NoirAPartido">
+                        <div>No ir al partido</div>
+                        <q-icon   
+                            class="q-ml-sm"
+                            name="sports_soccer"
+                            color="negative"
+                            />
+                    </q-btn>
+                    </div> 
+                </l-popup>  
+            </l-layer-group>    
+            <l-marker v-for="(partido, id, index) in partidos" :lat-lng="partido.ubicacion" :key="index" @click="popupInfoPartido(partido, id)">
             </l-marker>      
         </l-map>
         
@@ -52,7 +106,7 @@ import * as geocoder from 'esri-leaflet-geocoder';
 import * as easyButton from 'leaflet-easybutton'
 import 'esri-leaflet-geocoder/dist/esri-leaflet-geocoder.css'
 import * as valle from 'src/components/mapa/Polygon/Valle'
-import {mapState} from 'vuex'
+import {mapState, mapMutations} from 'vuex'
 
 delete Icon.Default.prototype._getIconUrl;
 Icon.Default.imagePath = '.';
@@ -88,7 +142,8 @@ export default {
             mapa: undefined,
             poligon: undefined,
             ///Intancias mapa////////                       
-            
+            partidos: {},
+            partidoSeleccionado:{asistentes: []}
         }
     },
     mounted(){
@@ -115,13 +170,34 @@ export default {
             let localizacion =false;  
             self.obtenerUbicacionUsuario();
         }).addTo(this.mapa);
+        ///////////////////////////////////conexion con firebase///////////////////////////////////
+        var refDbPartidos = this.$firebase.database().ref('partidos/')
+        refDbPartidos.on('value', (snapshot)=>{
+            this.partidos = snapshot.val();                        
+            let objPartidos = {partidos: snapshot.val()}
+            let actualizarInfoPartido;
+            let idPartidoActual = this.partidoSeleccionado.idPartido
+            if(this.partidoSeleccionado.idPartido!=undefined){
+                actualizarInfoPartido= objPartidos.partidos[idPartidoActual];
+                this.partidoSeleccionado={
+                    idPartido: idPartidoActual,
+                    nombrePartido: actualizarInfoPartido.nombre,
+                    usuario: actualizarInfoPartido.usuario,                
+                    direccion: actualizarInfoPartido.direccion,
+                    fecha: actualizarInfoPartido.fecha,
+                    asistentes: actualizarInfoPartido.asistentes,
+                    maximoAsistentes: actualizarInfoPartido.maximoAsistentes,
+                    email: actualizarInfoPartido.email
+                }                
+            }
+            
+        })
+        ///////////////////////////////////conexion con firebase///////////////////////////////////
     },
     methods:{
         
         ///////////////////////////////////////////Funcionalidades del mapa/////////////////////////////////////////////////////
-        removeMarker(index) {
-            this.markers.splice(index, 1);
-        },
+        
         obtenerUbicacionUsuario(){
             let self = this;            
             let lat ;
@@ -165,8 +241,12 @@ export default {
                     this.polygon!=undefined?this.mapa.removeLayer(this.polygon):undefined;
                     this.notificacion(mensaje, 'negative', 'mood_bad',200)
                     this.restaurarMapa()
-                }else{                    
+                }else{                                        
                     this.direccionSeleccionada = ltlg.text!=undefined?ltlg.text: result.address.LongLabel
+                    this.setInformacionPartido({
+                        latlng: ubicacion,
+                        direccion: this.direccionSeleccionada
+                    });
                     this.direccionCargada = true;      
                 }                                                        
            })
@@ -226,13 +306,48 @@ export default {
             return organizado})    
             return   geoJsonOrganizado;
         },
+        popupInfoPartido(infoPartido, id){
+            let latlng = infoPartido.ubicacion
+            
+            this.partidoSeleccionado ={
+                idPartido: id,
+                nombrePartido: infoPartido.nombre,
+                usuario: infoPartido.usuario,                
+                direccion: infoPartido.direccion,
+                fecha: infoPartido.fecha,
+                asistentes: infoPartido.asistentes,
+                maximoAsistentes: infoPartido.maximoAsistentes,
+                email: infoPartido.email
+            }
+            this.$refs.popInfoPartido.mapObject.openPopup(latlng)
+            
+        },
+        irAPartido(){
+            //this.partidoSeleccionado
+            var refDbPartidos = this.$firebase.database().ref()
+            let updates = {}
+            this.partidoSeleccionado.asistentes.push({
+                nombreUsuario: this.informacionUsuario.nombreUsuario,
+                        email :this.informacionUsuario.email})
+            updates[`partidos/${this.partidoSeleccionado.idPartido}/asistentes`] = this.partidoSeleccionado.asistentes            
+            refDbPartidos.update(updates)
+        },
+        NoirAPartido(){
+            var refDbPartidos = this.$firebase.database().ref()
+            let updates = {}
+            this.partidoSeleccionado.asistentes=this.partidoSeleccionado.asistentes.filter(val=>val.email!=this.informacionUsuario.email)
+            updates[`partidos/${this.partidoSeleccionado.idPartido}/asistentes`] = this.partidoSeleccionado.asistentes            
+            refDbPartidos.update(updates)
+        },
         ///////////////////////////////////////////Funcionalidades del mapa/////////////////////////////////////////////////////
-        
+        ...mapMutations('elementosPublicos',['setInformacionPartido']),        
 
     },
     computed:{
-        ...mapState('elementosPublicos',['crearPartido']),
-        ...mapState('elementosPublicos',['plugins'])
+        ...mapState('elementosPublicos',['funcionCrearPartido']),
+        ...mapState('elementosPublicos',['plugins']),
+        ...mapState('elementosPublicos',['informacionUsuario']),
+        ...mapState('elementosPublicos',['sesionIniciada'])
     }
 }
 </script>

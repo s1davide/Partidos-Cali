@@ -62,6 +62,7 @@
       </q-list>
     </q-drawer>
     <ConfiguracionPerfil/>
+    <CrearPartido/>
     <q-page-container>
       <router-view />
     </q-page-container>
@@ -72,13 +73,17 @@
 import EssentialLink from 'components/EssentialLink.vue';
 import Menu from 'components/barraNavegacion/Menu.vue'
 import ConfiguracionPerfil  from 'components/barraNavegacion/ConfiguracionPerfil.vue'
+import CrearPartido from 'components/mapa/Partidos/CrearPartido'
 import {mapState} from 'vuex'
 const linksData = [];
 
 export default {
   name: 'MainLayout',  
   
-  components: { EssentialLink, Menu, ConfiguracionPerfil},
+  components: { EssentialLink, Menu, ConfiguracionPerfil, CrearPartido},
+  setup () {
+    const leftDrawerOpen = ref(false)
+  },
   data() {
     return {
       leftDrawerOpen: false,

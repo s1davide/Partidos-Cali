@@ -26,12 +26,13 @@
 
 <script>
 import Mapa from 'components/mapa/Mapa.vue';
-import {mapMutations} from 'vuex';
+import {mapState, mapMutations} from 'vuex';
+import { setDialogoCrearPartido } from 'src/store/elementosPublicos/mutations';
 export default {    
   name: 'PageIndex',
   components: { Mapa },
   mounted(){    
-    this.asignaFuncionCrearPartido(this.crearPartido)
+    this.setFuncionCrearPartido(this.crearPartido)
   },
   data(){
     return{      
@@ -42,11 +43,22 @@ export default {
   },
   methods:{
     //////////////////////////////////////////////////Gestión Partidos/////////////////////////////////////////////////////
-    crearPartido(){
-      this.mostrarDialogo = true;
+    crearPartido(infoPartido){      
+      if(!this.sesionIniciada){        
+        this.mostrarDialogo = true;
+      }else{
+        this.setDialogoCrearPartido(true)
+        
+      }
+      
     },
-    ...mapMutations('elementosPublicos',['asignaFuncionCrearPartido']),
+    ...mapMutations('elementosPublicos',['setFuncionCrearPartido']),
+    ...mapMutations('elementosPublicos',['setDialogoCrearPartido']),    
+    
     //////////////////////////////////////////////////Gestión Partidos/////////////////////////////////////////////////////
+  },
+  computed:{
+    ...mapState('elementosPublicos',['sesionIniciada']),
   }
 
 };
